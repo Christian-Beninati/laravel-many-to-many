@@ -85,6 +85,23 @@
         <img src="{{ $project->image ? $project->getImagePath() : 'https://marcolanci.it/utils/placeholder.jpg' }}"
             alt="Preview" class="img-fluid" id="image-preview">
     </div>
+
+    <div class="col-10 my-3">
+        @foreach ($technologies as $technology)
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" @if (in_array($technology->id, old('technologies', $project_technology_ids ?? []))) checked @endif
+                    id="technology-{{ $technology->id }}" value="{{ $technology->id }}" name="technologies[]">
+                <label class="form-check-label"
+                    for="technology-{{ $technology->id }}">{{ $technology->label }}</label>
+            </div>
+            @error('technologies')
+                <div class="text-danger">
+                    {{ $message }}
+                </div>
+            @enderror
+        @endforeach
+    </div>
+
 </div>
 <hr>
 <div class="d-flex justify-content-end mt-4">
@@ -94,3 +111,4 @@
 
 </div>
 </form>
+{{--  --}}

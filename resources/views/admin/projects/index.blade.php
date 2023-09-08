@@ -14,6 +14,7 @@
                 <th scope="col">#</th>
                 <th scope="col">Title</th>
                 <th scope="col">Type</th>
+                <th scope="col">Technologies</th>
                 <th scope="col">Link</th>
                 <th scope="col">Created on</th>
                 <th scope="col">Last edit</th>
@@ -26,6 +27,13 @@
                     <th scope="row" class="align-middle">{{ $project->id }}</th>
                     <td class="align-middle">{{ $project->title }}</td>
                     <td class="align-middle">{{ $project->type?->label }}</td>
+                    <td>
+                        @forelse($project->technologies as $technology)
+                            <span
+                                class="badge rounded-pill text-bg-{{ $technology->color }} me-2">{{ $technology->label }}</span>
+                        @empty -
+                        @endforelse
+                    </td>
                     <td class="align-middle">{{ $project->url }}</td>
                     <td class="align-middle">{{ $project->created_at }}</td>
                     <td class="align-middle">{{ $project->updated_at }}</td>
@@ -49,7 +57,11 @@
                     </td>
                 </tr>
             @empty
-                <h3>There are no projects</h3>
+                <tr>
+                    <td class="text-center" colspan="6">
+                        <h3>There are no projects</h3>
+                    </td>
+                </tr>
             @endforelse
         </tbody>
     </table>

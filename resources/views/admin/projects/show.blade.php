@@ -19,8 +19,11 @@
         <strong>Created on:</strong> {{ $project->created_at }}
         <strong>Last edit:</strong> {{ $project->updated_at }}
         <strong>Type:</strong> {{ $project->type ? $project->type->label : 'None' }}
-
     </div>
+    @forelse($project->technologies as $technology)
+        <span class="badge rounded-pill text-bg-{{ $technology->color }}">{{ $technology->label }}</span>
+    @empty -
+    @endforelse
 
     <hr>
     <footer class="d-flex justify-content-between">

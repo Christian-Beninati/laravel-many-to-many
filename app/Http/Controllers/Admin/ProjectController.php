@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Technology;
 use App\Models\Type;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -28,8 +30,8 @@ class ProjectController extends Controller
     {
         $project = new Project();
         $types = Type::all();
-
-        return view('admin.projects.create', compact('project', 'types'));
+        $technologies = Technology::all();
+        return view("admin.projects.create", compact("project", "types", "technologies"));
     }
 
     /**
@@ -43,7 +45,8 @@ class ProjectController extends Controller
                 'url' => 'required|unique:projects|url:http,https',
                 'image' => 'nullable|image:jpg,jpeg,png',
                 'description' => 'nullable|string',
-                'type_id' => 'nullable|exists:types,id'
+                'type_id' => 'nullable|exists:types,id',
+                'technologies' => 'nullable|exists:technologies,id'
             ],
             [
                 'title.required' => ' Title is required',
@@ -53,7 +56,8 @@ class ProjectController extends Controller
                 'url.url' => ' The link is not valid',
                 'description.required' => 'There can be no project without a description',
                 'image.image' => 'The uploaded file is not valid',
-                'type_id.exists' => 'The type entered is non-existent'
+                'type_id.exists' => 'The type entered is non-existent',
+                'technologies.exists' => 'One or more technologies are invalid'
             ]
         );
 
@@ -67,9 +71,14 @@ class ProjectController extends Controller
             $data['image'] = $img_url;
         }
 
+
         $project->fill($data);
 
         $project->save();
+
+        if (array_key_exists('technologies', $data)) {
+            $project->technologies()->attach($data['technologies']);
+        }
 
         return to_route('admin.projects.show', $project)->with('alert-type', 'success')->with('alert-message', 'Project successfully added ');
     }
@@ -87,9 +96,10 @@ class ProjectController extends Controller
      */
     public function edit(Project $project)
     {
-        $types = Type::select('id', 'label')->get();
-
-        return view('admin.projects.edit', compact('project', 'types'));
+        $types = Type::all();
+        $technologies = Technology::all();
+        $project_technology_ids = $project->technologies->pluck('id')->toArray();
+        return view('admin.projects.edit', compact('project', 'types', 'technologies', 'project_technology_ids'));
     }
 
     /**
@@ -103,7 +113,8 @@ class ProjectController extends Controller
                 'url' => ['required', 'url:http,https', Rule::unique('projects')->ignore($project->id)],
                 'image' => 'nullable|image:jpg,jpeg,png',
                 'description' => 'nullable|string',
-                'type_id' => 'nullable|exists:types,id'
+                'type_id' => 'nullable|exists:types,id',
+                'technologies' => 'nullable|exists:technologies,id'
 
             ],
             [
@@ -114,7 +125,9 @@ class ProjectController extends Controller
                 'url.url' => ' The link is not valid',
                 'description.required' => 'There can be no project without a description',
                 'image.image' => 'The uploaded file is not valid',
-                'type_id.exists' => 'The type entered is non-existent'
+                'type_id.exists' => 'The type entered is non-existent',
+                'technologies.exists' => 'One or more technologies are invalid'
+
 
             ]
         );
@@ -128,6 +141,10 @@ class ProjectController extends Controller
         }
 
         $project->update($data);
+
+        if (!Arr::exists($data, 'technologies') && count($project->technologies)) $project->technologies()->detach();
+        elseif (Arr::exists($data, 'technologies')) $project->technologies()->sync($data['technologies']);
+
 
         return to_route('admin.projects.show', $project)->with('alert-message', 'Successfully modified project')->with('alert-type', 'success');
     }
@@ -149,5 +166,6 @@ class ProjectController extends Controller
 
         if ($project->image) Storage::delete($project->image);
         $project->forceDelete();
+        if (count($project->technologies)) $project->technologies()->detach();
     }
 }
